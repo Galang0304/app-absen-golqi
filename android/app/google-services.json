@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "914090245496",
+    "project_id": "golqi-f9130",
+    "storage_bucket": "golqi-f9130.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:914090245496:android:e88a3ba3ea8a15a5851c8d",
+        "android_client_info": {
+          "package_name": "com.golqi.absenapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAcyC1ySRj9laSwQHd_4_M8IFb3w2NxJl8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
