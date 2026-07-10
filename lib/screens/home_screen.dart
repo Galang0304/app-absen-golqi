@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -18,6 +19,8 @@ class _HomeScreenState extends State<HomeScreen> {
   QueryDocumentSnapshot<Map<String, dynamic>>? _today;
   bool _loadingToday = true;
   bool _processing = false;
+  DateTime _now = DateTime.now();
+  Timer? _clockTimer;
 
   LocationInfo? _loc;
   bool _loadingMap = true;
@@ -26,8 +29,17 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() => _now = DateTime.now());
+    });
     _loadToday();
     _loadMap();
+  }
+
+  @override
+  void dispose() {
+    _clockTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadToday() async {
@@ -128,6 +140,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   _header(nama, user?['cabang'] as String?),
                   const SizedBox(height: 20),
                   if (!profileComplete || noHp.isEmpty) _profilePrompt(),
+                  _clockCard(),
+                  const SizedBox(height: 16),
                   _statusCard(),
                   const SizedBox(height: 20),
                   _mapCard(),
@@ -182,6 +196,41 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(fontSize: 13, color: Color(0xFF92400E))),
         ),
       ]),
+    );
+  }
+
+  Widget _clockCard() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          const Text(
+            'Waktu Sekarang',
+            style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            DateFormat('HH:mm:ss').format(_now),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 42,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 2,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
