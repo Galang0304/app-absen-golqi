@@ -97,8 +97,19 @@ class _MainShellState extends State<MainShell> {
           bottomNavigationBar: NavigationBar(
             selectedIndex: safeIndex,
             onDestinationSelected: (i) => setState(() => _index = i),
-            backgroundColor: Colors.white,
-            indicatorColor: AppColors.primaryLight,
+            backgroundColor: AppColors.primary,
+            surfaceTintColor: AppColors.primary,
+            elevation: 12,
+            shadowColor: Colors.black.withValues(alpha: 0.18),
+            indicatorColor: Colors.white.withValues(alpha: 0.18),
+            labelTextStyle: WidgetStateProperty.resolveWith((states) {
+              final selected = states.contains(WidgetState.selected);
+              return TextStyle(
+                color: selected ? Colors.white : Colors.white70,
+                fontSize: 11,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              );
+            }),
             labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
             destinations: destinations,
           ),
