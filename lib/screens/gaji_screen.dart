@@ -15,7 +15,6 @@ class _GajiScreenState extends State<GajiScreen> {
   int _monthOffset = 0;
   bool _loading = true;
 
-  double _gajiPokok = 0;
   List<Map<String, dynamic>> _tunjangan = [];
   final List<Map<String, dynamic>> _spList = [];
   final List<Map<String, dynamic>> _rewardList = [];
@@ -47,7 +46,6 @@ class _GajiScreenState extends State<GajiScreen> {
 
     final userDoc = await db.collection('users').doc(_uid).get();
     final u = userDoc.data() ?? {};
-    _gajiPokok = (u['gajiPokok'] as num?)?.toDouble() ?? 0;
     _tunjangan = ((u['tunjangan'] as List?) ?? []).cast<Map<String, dynamic>>();
 
     final sp = await db.collection('surat_peringatan').where('userId', isEqualTo: _uid).get();
@@ -70,7 +68,7 @@ class _GajiScreenState extends State<GajiScreen> {
     final totalTunjangan = _tunjangan.fold<double>(0, (s, t) => s + ((t['nominal'] as num?)?.toDouble() ?? 0));
     final totalSP = _spList.fold<double>(0, (s, x) => s + ((x['nominal'] as num?)?.toDouble() ?? 0));
     final totalReward = _rewardList.fold<double>(0, (s, x) => s + ((x['nominal'] as num?)?.toDouble() ?? 0));
-    final total = _gajiPokok + totalTunjangan - totalSP + totalReward;
+    final total = totalTunjangan - totalSP + totalReward;
 
     final r = _range();
     final monthLabel = DateFormat('MMMM yyyy', 'id_ID').format(r.start);
@@ -124,7 +122,6 @@ class _GajiScreenState extends State<GajiScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  _row('Gaji Pokok', _gajiPokok, AppColors.text),
                   _sectionDivider('Tunjangan', totalTunjangan, AppColors.success),
                   ..._tunjangan.map((t) => _detail(t['nama'] as String? ?? 'Tunjangan', (t['nominal'] as num?)?.toDouble() ?? 0, AppColors.success)),
                   if (_tunjangan.isEmpty) _emptyDetail('Tidak ada tunjangan'),
@@ -157,7 +154,7 @@ class _GajiScreenState extends State<GajiScreen> {
                     ]),
                   ),
                   const SizedBox(height: 8),
-                  const Text('Perhitungan: gaji pokok + tunjangan + reward − potongan SP.',
+                    const Text('Perhitungan: tunjangan + reward − potongan SP.',
                       style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
                 ],
               ),
@@ -167,16 +164,6 @@ class _GajiScreenState extends State<GajiScreen> {
 
   String _spLabel(String? jenis) {
     return {'teguran': 'Surat Teguran', 'sp1': 'SP I', 'sp2': 'SP II', 'sp3': 'SP III'}[jenis] ?? 'SP';
-  }
-
-  Widget _row(String label, double value, Color color) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Text(label, style: const TextStyle(fontSize: 14, color: AppColors.text, fontWeight: FontWeight.w600)),
-        Text(_rupiah(value), style: TextStyle(fontSize: 14, color: color, fontWeight: FontWeight.bold)),
-      ]),
-    );
   }
 
   Widget _sectionDivider(String label, double total, Color color, {bool minus = false}) {
