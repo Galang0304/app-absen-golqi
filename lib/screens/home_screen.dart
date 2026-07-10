@@ -25,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
   LocationInfo? _loc;
   bool _loadingMap = true;
   String? _mapError;
+  GoogleMapController? _mapController;
 
   @override
   void initState() {
@@ -64,6 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _loc = info;
         _loadingMap = false;
       });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _fitMapToLocations());
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -335,8 +337,55 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         if (_loc != null && !_loadingMap) _distanceBanner(_loc!),
+        if (_loc?.outletLat != null && _loc?.outletLng != null) ...[
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _focusOnOutlet,
+              icon: const Icon(Icons.store_mall_directory_outlined, size: 18),
+              label: Text('Lihat Lokasi ${_loc?.outletNama ?? 'Toko'}'),
+            ),
+          ),
+        ],
       ],
     );
+  }
+
+  Future<void> _focusOnOutlet() async {
+    final loc = _loc;
+    final controller = _mapController;
+    if (loc?.outletLat == null || loc?.outletLng == null || controller == null) return;
+    await controller.animateCamera(CameraUpdate.newCameraPosition(
+      CameraPosition(target: LatLng(loc!.outletLat!, loc.outletLng!), zoom: 17),
+    ));
+  }
+
+  Future<void> _fitMapToLocations() async {
+    final loc = _loc;
+    final controller = _mapController;
+    if (loc?.outletLat == null || loc?.outletLng == null || controller == null) return;
+
+    final me = LatLng(loc!.myLat, loc.myLng);
+    final toko = LatLng(loc.outletLat!, loc.outletLng!);
+    if (loc.withinRadius) {
+      await controller.animateCamera(CameraUpdate.newCameraPosition(
+        CameraPosition(target: me, zoom: 16),
+      ));
+      return;
+    }
+    final southwest = LatLng(
+      me.latitude < toko.latitude ? me.latitude : toko.latitude,
+      me.longitude < toko.longitude ? me.longitude : toko.longitude,
+    );
+    final northeast = LatLng(
+      me.latitude > toko.latitude ? me.latitude : toko.latitude,
+      me.longitude > toko.longitude ? me.longitude : toko.longitude,
+    );
+    await controller.animateCamera(CameraUpdate.newLatLngBounds(
+      LatLngBounds(southwest: southwest, northeast: northeast),
+      70,
+    ));
   }
 
   Widget _mapContent() {
@@ -374,6 +423,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     };
     final circles = <Circle>{};
+    final polylines = <Polyline>{};
     LatLng center = me;
 
     if (loc.outletLat != null && loc.outletLng != null) {
@@ -392,13 +442,27 @@ class _HomeScreenState extends State<HomeScreen> {
         strokeColor: AppColors.primary,
         strokeWidth: 1,
       ));
+      if (!loc.withinRadius) {
+        polylines.add(Polyline(
+          polylineId: const PolylineId('route-to-outlet'),
+          points: [me, toko],
+          color: AppColors.primary,
+          width: 5,
+          patterns: [PatternItem.dash(18), PatternItem.gap(10)],
+        ));
+      }
       center = LatLng((loc.myLat + loc.outletLat!) / 2, (loc.myLng + loc.outletLng!) / 2);
     }
 
     return GoogleMap(
       initialCameraPosition: CameraPosition(target: center, zoom: 16),
+      onMapCreated: (controller) {
+        _mapController = controller;
+        _fitMapToLocations();
+      },
       markers: markers,
       circles: circles,
+      polylines: polylines,
       myLocationEnabled: false,
       myLocationButtonEnabled: false,
       zoomControlsEnabled: false,
